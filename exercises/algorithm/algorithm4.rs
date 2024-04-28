@@ -3,8 +3,7 @@
 	This problem requires you to implement a basic interface for a binary tree
 */
 
-//I AM NOT DONE
-//use std::cmp::Ordering;
+use std::cmp::Ordering;
 use std::fmt::Debug;
 
 
@@ -39,7 +38,10 @@ where
     }
 }
 
-impl<T:Ord + Clone> BinarySearchTree<T>{
+impl<T> BinarySearchTree<T>
+where
+    T: Ord,
+{
 
     fn new() -> Self {
         BinarySearchTree { root: None }
@@ -47,45 +49,42 @@ impl<T:Ord + Clone> BinarySearchTree<T>{
 
     // Insert a value into the BST
     fn insert(&mut self, value: T) {
-        let new_node = Box::new(TreeNode::new(value));
-        if let Some(ref mut root) = self.root {
-            root.insert(value);
-        } else {
-            self.root = Some(new_node);
+        match self.root {
+            Some(ref mut node) => node.insert(value),
+            None => self.root = Some(Box::new(TreeNode::new(value))),
         }
     }
 
     // Search for a value in the BST
     fn search(&self, value: T) -> bool {
-        self.root.as_ref().map_or(false, |node| node.search(value))
+        let mut current = &self.root;
+        while let Some(ref node) = current {
+            match value.cmp(&node.value) {
+                Ordering::Less => current = &node.left,
+                Ordering::Greater => current = &node.right,
+                Ordering::Equal => return true,
+            }
+        }
+        false
     }
 }
 
-impl<T:Ord + Clone> TreeNode<T>{
+impl<T> TreeNode<T>
+where
+    T: Ord,
+{
     // Insert a node into the tree
     fn insert(&mut self, value: T) {
-        if value < self.value {
-            if let Some(ref mut left) = self.left {
-                left.insert(value);
-            } else {
-                self.left = Some(Box::new(TreeNode::new(value)));
-            }
-        } else if value > self.value {
-            if let Some(ref mut right) = self.right {
-                right.insert(value);
-            } else {
-                self.right = Some(Box::new(TreeNode::new(value)));
-            }
-        }
-    }
-
-    fn search(&self, value: T) -> bool {
-        if value == self.value {
-            true
-        } else if value < self.value {
-            self.left.as_ref().map_or(false, |left| left.search(value))
-        } else {
-            self.right.as_ref().map_or(false, |right| right.search(value))
+        match value.cmp(&self.value) {
+            Ordering::Less => match self.left {
+                Some(ref mut node) => node.insert(value),
+                None => self.left = Some(Box::new(TreeNode::new(value))),
+            },
+            Ordering::Greater => match self.right {
+                Some(ref mut node) => node.insert(value),
+                None => self.right = Some(Box::new(TreeNode::new(value))),
+            },
+            Ordering::Equal => (),
         }
     }
 }
